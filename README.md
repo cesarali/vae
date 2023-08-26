@@ -1,2 +1,2 @@
-# vae
+# mutual-information
 dummy project
