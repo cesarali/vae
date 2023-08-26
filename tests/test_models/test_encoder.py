@@ -3,7 +3,6 @@ import unittest
 
 # configs
 from vae.configs.vae_config import VAEConfig
-from vae.models.encoder_config import EncoderConfig
 
 #load
 from vae.data.dataloader_utils import load_dataloader
@@ -12,13 +11,28 @@ from vae.models.models_utils import load_encoder
 class TestEncoder(unittest.TestCase):
 
     def test_encoder(self):
+        z_dim = 23
+        batch_size = 128
+        expected_size = torch.Size([batch_size,z_dim])
+
         config = VAEConfig()
+        config.z_dim = z_dim
+        config.dataloader.batch_size = batch_size
+
         dataloader = load_dataloader(config)
         databatch = next(dataloader.train().__iter__())
         data,_ = databatch
 
         encoder = load_encoder(config)
-        self.assertIsNotNone(encoder)
+        z,mu,logvar = encoder(data)
+
+        self.assertEqual(z.shape,expected_size)
+        self.assertEqual(mu.shape,expected_size)
+        self.assertEqual(logvar.shape,expected_size)
+
+        print(z.shape)
+        print(mu.shape)
+        print(logvar.shape)
 
 
 
