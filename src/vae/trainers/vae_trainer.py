@@ -11,7 +11,7 @@ from vae.data.dataloaders import NISTLoader
 from vae.models.encoder_config import EncoderConfig
 from vae.configs.vae_config import VAEConfig
 from vae.losses.contrastive_loss import vae_loss
-from vae.models.vae import VAE
+from vae.models.vae_model import VAE
 
 class VAETrainer:
 
@@ -36,16 +36,16 @@ class VAETrainer:
             raise Exception("Loss Not Implemented")
 
         #define models
-        vae = VAE()
-        vae.create_new_from_config(self.config,self.device)
-        self.dataloader = vae.dataloader
+        self.vae = VAE()
+        self.vae.create_new_from_config(self.config,self.device)
+        self.dataloader = self.vae.dataloader
 
 
     def parameters_info(self):
         print("# ==================================================")
         print("# START OF BACKWARD MI TRAINING ")
         print("# ==================================================")
-        print("# Binary Classifier *********************************")
+        print("# VAE parameters ************************************")
         pprint(asdict(self.vae.config))
         print("# Paths Parameters **********************************")
         pprint(asdict(self.dataloader.config))
@@ -56,11 +56,14 @@ class VAETrainer:
         print("# ==================================================")
 
     def preprocess_data(self,data_batch):
-        return data_batch
+        return (data_batch[0].to(self.device), data_batch[1].to(self.device))
 
     def train_step(self,data_batch,number_of_training_step):
+
         data_batch = self.preprocess_data(data_batch)
-        loss = self.loss(data_batch,self.binary_classifier)
+        x,_ = data_batch
+        recon_x, mu, logvar = self.vae(x)
+        loss = self.loss(recon_x, x, mu, logvar)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -72,7 +75,9 @@ class VAETrainer:
     def test_step(self,data_batch):
         with torch.no_grad():
             data_batch = self.preprocess_data(data_batch)
-            loss_ = self.loss(data_batch, self.binary_classifier)
+            x, _ = data_batch
+            recon_x, mu, logvar = self.vae(x)
+            loss_ = self.loss(recon_x, x, mu, logvar)
             return loss_
 
     def initialize(self):
@@ -82,12 +87,14 @@ class VAETrainer:
         self.optimizer = Adam(self.vae.parameters(),lr=self.learning_rate)
         data_batch = next(self.dataloader.train().__iter__())
         data_batch = self.preprocess_data(data_batch)
-        initial_loss = self.loss(data_batch,self.binary_classifier)
+        x,_ = data_batch
+        recon_x, mu, logvar = self.vae(x)
+        initial_loss = self.loss(recon_x, x, mu, logvar)
 
         assert torch.isnan(initial_loss).any() == False
         assert torch.isinf(initial_loss).any() == False
 
-        self.save_results(self.binary_classifier,
+        self.save_results(self.vae,
                           initial_loss,
                           None,
                           None,
@@ -112,6 +119,9 @@ class VAETrainer:
                 train_loss.append(loss.item())
                 LOSS.append(loss.item())
                 number_of_training_step += 1
+                if number_of_training_step % 100 == 0:
+                    print("number_of_training_step: {}, Loss: {}".format(number_of_training_step, loss.item()))
+
             average_train_loss = np.asarray(train_loss).mean()
 
             test_loss = []
@@ -123,7 +133,7 @@ class VAETrainer:
 
             # SAVE RESULTS IF LOSS DECREASES IN VALIDATION
             if average_test_loss < best_loss:
-                self.save_results(self.binary_classifier,
+                self.save_results(self.vae,
                                   initial_loss,
                                   average_train_loss,
                                   average_test_loss,
@@ -132,7 +142,7 @@ class VAETrainer:
                                   checkpoint=False)
 
             if (epoch + 1) % self.config.trainer.save_model_epochs == 0:
-                self.save_results(self.binary_classifier,
+                self.save_results(self.vae,
                                   initial_loss,
                                   average_train_loss,
                                   average_test_loss,
@@ -140,8 +150,7 @@ class VAETrainer:
                                   epoch+1,
                                   checkpoint=True)
 
-            if epoch % 10 == 0:
-                print("Epoch: {}, Loss: {}".format(epoch + 1, average_train_loss))
+
 
         self.writer.close()
 
@@ -155,7 +164,7 @@ class VAETrainer:
                      checkpoint=False):
         if checkpoint:
             RESULTS = {
-                "binary_classifier":binary_classifier,
+                "vae":binary_classifier,
                 "initial_loss":initial_loss,
                 "average_train_loss":average_train_loss,
                 "average_test_loss":average_test_loss,
@@ -164,7 +173,7 @@ class VAETrainer:
             torch.save(RESULTS,self.config.experiment_files.best_model_path_checkpoint.format(epoch))
         else:
             RESULTS = {
-                "binary_classifier":binary_classifier,
+                "vae":binary_classifier,
                 "initial_loss":initial_loss,
                 "average_train_loss":average_train_loss,
                 "average_test_loss":average_test_loss,

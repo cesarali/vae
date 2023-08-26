@@ -25,7 +25,6 @@ class VAE(nn.Module):
     """
 
     """
-
     def __init__(self,
                  config:VAEConfig=None,
                  experiment_name='vae',
@@ -75,11 +74,13 @@ class VAE(nn.Module):
                                     checkpoint=None,
                                     device=torch.device("cpu")):
 
-        self.encoder, self.dataloader = load_experiments_configuration(experiment_name,
-                                                                       experiment_type,
-                                                                       experiment_indentifier,
-                                                                       checkpoint)
+        self.encoder,self.decoder, self.dataloader = load_experiments_configuration(experiment_name,
+                                                                                    experiment_type,
+                                                                                    experiment_indentifier,
+                                                                                    checkpoint)
         self.encoder.to(device)
+        self.decoder.to(device)
+
 
     def generate(self, number_of_samples=64):
         # Generating samples from the trained VAE
@@ -89,3 +90,14 @@ class VAE(nn.Module):
             sample = self.decoder(z_sample).cpu()
         return sample
 
+
+if __name__=="__main__":
+    from vae.utils.plots import plot_sample
+
+    va = VAE()
+    va.load_results_from_directory(experiment_name='vae',
+                                    experiment_type='mnist',
+                                    experiment_indentifier="vae_train_example",
+                                    checkpoint=None)
+    sample_ = va.generate(number_of_samples=64)
+    plot_sample(sample_)

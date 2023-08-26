@@ -4,7 +4,7 @@ import torch
 import unittest
 
 from vae.configs.vae_config import VAEConfig
-from vae.models.vae import VAE
+from vae.models.vae_model import VAE
 
 from vae.data.dataloader_utils import load_dataloader
 
