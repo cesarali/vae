@@ -25,9 +25,6 @@ class VAE(nn.Module):
     """
 
     """
-    encoder: Encoder = None
-    decoder: Decoder = None
-    dataloader: NISTLoader = None
 
     def __init__(self,
                  config:VAEConfig=None,
@@ -35,16 +32,20 @@ class VAE(nn.Module):
                  experiment_type='mnist',
                  experiment_indentifier="test",
                  checkpoint=None,
-                 device=torch.device("cpu")):
+                 device=torch.device("cpu"),
+                 read=False):
+        super(VAE,self).__init__()
 
         self.config = config
+
         if self.config is not None:
             self.create_new_from_config()
-        else:
-            self.load_results_from_directory(experiment_name='vae',
-                                             experiment_type='mnist',
-                                             experiment_indentifier="test",
-                                             checkpoint=None)
+        elif read:
+            self.load_results_from_directory(experiment_name=experiment_name,
+                                             experiment_type=experiment_type,
+                                             experiment_indentifier=experiment_indentifier,
+                                             checkpoint=checkpoint,
+                                             device=device)
 
     def forward(self,image):
         z, mu, logvar = self.encoder(image)
@@ -59,8 +60,13 @@ class VAE(nn.Module):
         self.encoder = load_encoder(self.config)
         self.encoder.to(device)
 
-        self.encoder = load_decoder(self.config)
+        self.decoder = load_decoder(self.config)
+        self.decoder.to(device)
+
+    def to(self,device):
+        super().to(device)
         self.encoder.to(device)
+        self.decoder.to(device)
 
     def load_results_from_directory(self,
                                     experiment_name='vae',
