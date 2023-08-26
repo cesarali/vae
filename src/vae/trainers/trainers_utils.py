@@ -16,7 +16,7 @@ def load_experiments_configuration(experiment_name, experiment_type, experiment_
 
     config: VAEConfig
     config, results = load_experiments_results(experiment_name, experiment_type, experiment_indentifier, checkpoint)
-    binary_classifier = results["binary_classifier"].to(torch.device("cpu"))
+    vae = results["vae"].to(torch.device("cpu"))
     dataloader = load_dataloader(config)
 
-    return binary_classifier,dataloader
+    return vae,dataloader

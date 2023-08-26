@@ -5,18 +5,18 @@ from torchvision import datasets, transforms
 from torch.autograd import Variable
 import numpy as np
 
-
+from vae.configs.vae_config import VAEConfig
 
 # Define the VAE model
-class VAE(nn.Module):
-    def __init__(self):
-        super(VAE, self).__init__()
+class Encoder(nn.Module):
+    def __init__(self,config:VAEConfig):
+        super(Encoder, self).__init__()
+        self.config = config
 
-        self.fc1 = nn.Linear(784, 400)
-        self.fc21 = nn.Linear(400, 20)  # Mean
-        self.fc22 = nn.Linear(400, 20)  # Variance
-        self.fc3 = nn.Linear(20, 400)
-        self.fc4 = nn.Linear(400, 784)
+        self.fc1 = nn.Linear(self.config.dataloader.input_dim, self.config.encoder.encoder_hidden_size)
+        self.fc21 = nn.Linear(self.config.encoder.encoder_hidden_size, self.config.z_dim)  # Mean
+        self.fc22 = nn.Linear(self.config.encoder.encoder_hidden_size, self.config.z_dim)  # Variance
+
 
     def encode(self, x):
         h1 = torch.relu(self.fc1(x))
@@ -27,12 +27,7 @@ class VAE(nn.Module):
         eps = torch.randn_like(std)
         return mu + eps * std
 
-    def decode(self, z):
-        h3 = torch.relu(self.fc3(z))
-        return torch.sigmoid(self.fc4(h3))
-
     def forward(self, x):
         mu, logvar = self.encode(x.view(-1, 784))
         z = self.reparameterize(mu, logvar)
-        return self.decode(z), mu, logvar
-
+        return z, mu, logvar

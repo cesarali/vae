@@ -4,14 +4,15 @@ from pathlib import Path
 from dataclasses import dataclass, asdict
 
 from vae.configs.files_config import ExperimentFiles
-from vae.models.encoder_config import BaseBinaryClassifierConfig
+from vae.models.encoder_config import EncoderConfig
+from vae.models.decoder_config import DecoderConfig
 from vae.trainers.vae_trainer_config import VAETrainerConfig
 from vae.data.dataloaders_config import NISTLoaderConfig
 
 all_dataloaders_configs = {"NISTLoader":NISTLoaderConfig}
-all_encoders_configs = {"BaseBinaryClassifier":BaseBinaryClassifierConfig}
-all_decoders_configs = {"BaseBinaryClassifier":BaseBinaryClassifierConfig}
-all_trainers_configs = {"MutualInformationTrainer":VAETrainerConfig}
+all_encoders_configs = {"Encoder":EncoderConfig}
+all_decoders_configs = {"Decoder":DecoderConfig}
+all_trainers_configs = {"VAETrainer":VAETrainerConfig}
 
 
 @dataclass
@@ -33,14 +34,17 @@ class VAEConfig:
 
     # files, directories and naming ---------------------------------------------
     delete :bool = True
-    experiment_name :str = 'mi'
-    experiment_type :str = 'multivariate_gaussian'
+    experiment_name :str = 'vae'
+    experiment_type :str = 'mnist'
     experiment_indentifier :str  = None
     init_model_path = None
 
+    # vae variables ------------------------------------------------------------
+    z_dim: int = 20
+
     # all configs ---------------------------------------------------------------
-    encoder: BaseBinaryClassifierConfig = BaseBinaryClassifierConfig()
-    decoder: BaseBinaryClassifierConfig = BaseBinaryClassifierConfig()
+    encoder: EncoderConfig = EncoderConfig()
+    decoder: DecoderConfig = DecoderConfig()
 
     dataloader: NISTLoaderConfig = NISTLoaderConfig()
     trainer: VAETrainerConfig = VAETrainerConfig()
@@ -55,7 +59,7 @@ class VAEConfig:
         if isinstance(self.encoder, dict):
             self.encoder = all_encoders_configs[self.encoder["name"]](**self.encoder)
         if isinstance(self.decoder, dict):
-            self.decoder = all_encoders_configs[self.decoder["name"]](**self.decoder)
+            self.decoder = all_decoders_configs[self.decoder["name"]](**self.decoder)
         if isinstance(self.dataloader,dict):
             self.dataloader = all_dataloaders_configs[self.dataloader["name"]](**self.dataloader)
         if isinstance(self.trainer,dict):

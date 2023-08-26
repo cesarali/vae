@@ -11,7 +11,7 @@ from vae.configs.vae_config import get_config_from_file
 from vae.configs.vae_config import VAEConfig
 from vae.data.dataloaders import ContrastiveMultivariateGaussianLoaderConfig
 from vae.trainers.vae_trainer_config import VAETrainerConfig
-from vae.models.encoder_config import BaseBinaryClassifierConfig
+from vae.models.encoder_config import EncoderConfig
 
 from vae.data.dataloader_utils import load_dataloader
 from vae.models.models_utils import load_binary_classifier
@@ -34,7 +34,7 @@ class TestMITrainer(unittest.TestCase):
                                                                              batch_size=32,
                                                                              data_set="example_big",
                                                                              delete_data=False)
-        self.config.encoder = BaseBinaryClassifierConfig(hidden_size=40)
+        self.config.encoder = EncoderConfig(hidden_size=40)
         self.config.trainer = VAETrainerConfig(number_of_epochs=5,
                                                save_model_epochs=2)
         self.MI = VAE()
@@ -58,7 +58,7 @@ class TestMITrainer(unittest.TestCase):
 
         print("p join: {0} p independent: {1}".format(p_join.mean(),p_independent.mean()))
 
-        estimate = MIE.MI_Estimate()
+        estimate = MIE.generate()
         real_value = MIE.dataloader.mutual_information()
 
         print("estimate: {0} real: {1}".format(estimate.item(),real_value.item()))

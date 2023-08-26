@@ -1,18 +1,18 @@
 from typing import Union
 from vae.configs.vae_config import VAEConfig
-from vae.models.encoder import BaseBinaryClassifier
-from vae.models.encoder_config import BaseBinaryClassifierConfig
+from vae.models.encoder import Encoder
+from vae.models.decoder import Decoder
 
-def load_binary_classifier(config:Union[BaseBinaryClassifierConfig,VAEConfig]):
-    if isinstance(config, VAEConfig):
-        config_ = config.encoder
-    elif isinstance(config, BaseBinaryClassifierConfig):
-        config_ = config
-    else:
-        raise Exception("No Classifier Config Found")
-
-    if config_.name == "BaseBinaryClassifier":
-        binary_classifier = BaseBinaryClassifier(config_)
+def load_encoder(config:VAEConfig):
+    if config.encoder.name == "Encoder":
+        encoder = Encoder(config)
     else:
         raise Exception("No Classifier")
-    return binary_classifier
+    return encoder
+
+def load_decoder(config:VAEConfig):
+    if config.encoder.name == "Encoder":
+        decoder = Decoder(config)
+    else:
+        raise Exception("No Classifier")
+    return decoder

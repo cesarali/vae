@@ -8,7 +8,7 @@ from dataclasses import asdict
 
 from vae.data.dataloaders import NISTLoader
 
-from vae.models.encoder_config import BaseBinaryClassifierConfig
+from vae.models.encoder_config import EncoderConfig
 from vae.configs.vae_config import VAEConfig
 from vae.losses.contrastive_loss import vae_loss
 from vae.models.vae import VAE

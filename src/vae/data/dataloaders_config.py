@@ -3,10 +3,11 @@ from dataclasses import dataclass
 
 @dataclass
 class NISTLoaderConfig:
-    name:str = "NIST"
+    name:str = "NISTLoader"
     data_set:str = "mnist"
     dataloader_data_dir:str = None
 
+    input_dim: int = 784
     batch_size: int = 32
     delete_data:bool = False
 
